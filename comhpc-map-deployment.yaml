@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: autoware-map
+  labels:
+    app: autoware-map
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: autoware-map
+  template:
+    metadata:
+      labels:
+        app: autoware-map
+    spec:
+      hostNetwork: true
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 986
+      containers:
+        - name: autoware-map
+          image: sudharsansabesh/autoware-sim:universe-devel
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              source /opt/autoware/setup.bash
+              ros2 launch tier4_map_launch map.launch.xml \
+                lanelet2_map_path:=/autoware_map/lanelet2_map.osm \
+                lanelet2_map_loader_param_path:=$(ros2 pkg prefix autoware_map_loader)/share/autoware_map_loader/config/lanelet2_map_loader.param.yaml \
+                pointcloud_map_path:=/autoware_map/pointcloud_map.pcd \
+                pointcloud_map_metadata_path:=/autoware_map/sample_data/t4v2.yaml \
+                pointcloud_map_loader_param_path:=$(ros2 pkg prefix autoware_map_loader)/share/autoware_map_loader/config/pointcloud_map_loader.param.yaml \
+                map_projector_info_path:=/autoware_map/sample-map-planning/map_projector_info.yaml \
+                map_tf_generator_param_path:=$(ros2 pkg prefix autoware_map_tf_generator)/share/autoware_map_tf_generator/config/map_tf_generator.param.yaml \
+                map_projection_loader_param_path:=$(ros2 pkg prefix autoware_map_projection_loader)/share/autoware_map_projection_loader/config/map_projection_loader.param.yaml \
+                param_path:=/autoware_map/sample-map-planning/map_config.yaml \
+                use_multithread:=true
+          env:
+            - name: RMW_IMPLEMENTATION
+              value: rmw_fastrtps_cpp
+            - name: ROS_HOME
+              value: /autoware_data/.ros
+            - name: ROS_LOG_DIR
+              value: /autoware_data/.ros/log
+          volumeMounts:
+            - name: map-vol
+              mountPath: /autoware_map
+              readOnly: true
+            - name: data-vol
+              mountPath: /autoware_data
+      volumes:
+        - name: map-vol
+          persistentVolumeClaim:
+            claimName: map-pvc
+        - name: data-vol
+          persistentVolumeClaim:
+            claimName: data-pvc

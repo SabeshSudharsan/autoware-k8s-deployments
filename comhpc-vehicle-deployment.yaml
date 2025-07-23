@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: autoware-vehicle
+  labels:
+    app: autoware-vehicle
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: autoware-vehicle
+  template:
+    metadata:
+      labels:
+        app: autoware-vehicle
+    spec:
+      hostNetwork: true
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 986
+      containers:
+        - name: autoware-vehicle
+          image: sudharsansabesh/autoware-sim:universe-devel
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              source /opt/autoware/setup.bash
+              ros2 launch tier4_vehicle_launch vehicle.launch.xml \
+                vehicle_model:=sample_vehicle \
+                sensor_model:=sample_sensor_kit \
+                launch_vehicle_interface:=true
+          env:
+            - name: RMW_IMPLEMENTATION
+              value: rmw_fastrtps_cpp
+            - name: ROS_HOME
+              value: /autoware_data/.ros
+            - name: ROS_LOG_DIR
+              value: /autoware_data/.ros/log
+          volumeMounts:
+            - name: map-vol
+              mountPath: /autoware_map
+              readOnly: true
+            - name: data-vol
+              mountPath: /autoware_data
+      volumes:
+        - name: map-vol
+          persistentVolumeClaim:
+            claimName: map-pvc
+        - name: data-vol
+          persistentVolumeClaim:
+            claimName: data-pvc

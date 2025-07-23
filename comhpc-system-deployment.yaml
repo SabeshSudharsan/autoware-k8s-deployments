@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: autoware-system
+  labels:
+    app: autoware-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: autoware-system
+  template:
+    metadata:
+      labels:
+        app: autoware-system
+    spec:
+      hostNetwork: true
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 986
+      containers:
+        - name: autoware-system
+          image: sudharsansabesh/autoware-sim:universe-devel
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              source /opt/autoware/setup.bash
+              ros2 launch tier4_system_launch system.launch.xml \
+                vehicle_model:=sample_vehicle \
+                sensor_model:=sample_sensor_kit \
+                run_mode:=planning_simulation \
+                component_state_monitor_topic_path:=/opt/autoware/share/autoware_launch/config/system/component_state_monitor/topics.yaml \
+                duplicated_node_checker_param_path:=/opt/autoware/share/autoware_duplicated_node_checker/config/duplicated_node_checker.param.yaml \
+                processing_time_checker_param_path:=/opt/autoware/share/autoware_processing_time_checker/config/processing_time_checker.param.yaml \
+                mrm_comfortable_stop_operator_param_path:=/opt/autoware/share/autoware_mrm_comfortable_stop_operator/config/mrm_comfortable_stop_operator.param.yaml \
+                mrm_emergency_stop_operator_param_path:=/opt/autoware/share/autoware_mrm_emergency_stop_operator/config/mrm_emergency_stop_operator.param.yaml \
+                system_monitor_param_path:=/opt/autoware/share/autoware_system_monitor/config/system_monitor.param.yaml \
+                component_interface_tools_param_path:=/opt/autoware/share/autoware_component_interface_tools/config/component_interface_tools.param.yaml \
+                system_error_monitor_param_path:=/opt/autoware/share/autoware_system_error_monitor/config/system_error_monitor.param.yaml \
+                dummy_diag_publisher_param_path:=/opt/autoware/share/autoware_dummy_diag_publisher/config/dummy_diag_publisher.param.yaml \
+                emergency_handler_param_path:=/opt/autoware/share/autoware_emergency_handler/config/emergency_handler.param.yaml \
+                system_monitor_cpu_monitor_param_path:=/opt/autoware/share/autoware_system_monitor/config/cpu_monitor.param.yaml \
+                system_monitor_gpu_monitor_param_path:=/opt/autoware/share/autoware_system_monitor/config/gpu_monitor.param.yaml \
+                system_monitor_hdd_monitor_param_path:=/opt/autoware/share/autoware_system_monitor/config/hdd_monitor.param.yaml \
+                system_monitor_mem_monitor_param_path:=/opt/autoware/share/autoware_system_monitor/config/mem_monitor.param.yaml \
+                system_monitor_network_monitor_param_path:=/opt/autoware/share/autoware_system_monitor/config/network_monitor.param.yaml \
+                system_monitor_voltage_monitor_param_path:=/opt/autoware/share/autoware_system_monitor/config/voltage_monitor.param.yaml \
+                system_monitor_net_monitor_param_path:=/opt/autoware/share/autoware_system_monitor/config/net_monitor.param.yaml \
+                system_monitor_process_monitor_param_path:=/opt/autoware/share/autoware_system_monitor/config/process_monitor.param.yaml \
+                system_monitor_ntp_monitor_param_path:=/opt/autoware/share/autoware_system_monitor/config/ntp_monitor.param.yaml \
+                launch_dummy_diag_publisher:=true \
+                mrm_handler_param_path:=/opt/autoware/share/autoware_mrm_handler/config/mrm_handler.param.yaml \
+                diagnostic_graph_aggregator_param_path:=/opt/autoware/share/autoware_diagnostic_graph_aggregator/config/diagnostic_graph_aggregator.param.yaml \
+                controller_manager_param_path:=/opt/autoware/share/autoware_controller_manager/config/controller_manager.param.yaml \
+                diagnostic_graph_aggregator_graph_path:=/opt/autoware/share/autoware_diagnostic_graph_aggregator/config/diagnostic_graph_aggregator_graph.param.yaml
+          env:
+            - name: RMW_IMPLEMENTATION
+              value: rmw_fastrtps_cpp
+            - name: ROS_HOME
+              value: /autoware_data/.ros
+            - name: ROS_LOG_DIR
+              value: /autoware_data/.ros/log
+          volumeMounts:
+            - name: map-vol
+              mountPath: /autoware_map
+              readOnly: true
+            - name: data-vol
+              mountPath: /autoware_data
+      volumes:
+        - name: map-vol
+          persistentVolumeClaim:
+            claimName: map-pvc
+        - name: data-vol
+          persistentVolumeClaim:
+            claimName: data-pvc

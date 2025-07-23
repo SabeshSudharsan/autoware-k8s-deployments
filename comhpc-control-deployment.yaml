@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: autoware-control
+  labels:
+    app: autoware-control
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: autoware-control
+  template:
+    metadata:
+      labels:
+        app: autoware-control
+    spec:
+      hostNetwork: true
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 986
+      containers:
+        - name: autoware-control
+          image: sudharsansabesh/autoware-sim:universe-devel
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              source /opt/autoware/setup.bash
+              ros2 launch tier4_control_launch control.launch.xml \
+                trajectory_follower_mode:=pure_pursuit \
+                lateral_controller_mode:=mpc_follower \
+                longitudinal_controller_mode:=pid \
+                check_external_emergency_heartbeat:=true \
+                launch_external_cmd_selector:=true \
+                launch_external_cmd_converter:=true \
+                launch_lane_departure_checker:=true \
+                launch_control_validator:=true \
+                launch_autonomous_emergency_braking:=true \
+                launch_collision_detector:=true \
+                launch_obstacle_collision_checker:=true \
+                launch_predicted_path_checker:=true \
+                launch_control_evaluator:=true \
+                use_aeb_autoware_state_check:=true \
+                vehicle_param_file:=$(ros2 pkg prefix sample_vehicle_description)/share/sample_vehicle_description/config/vehicle_info.param.yaml \
+                nearest_search_param_path:=$(ros2 pkg prefix autoware_path_smoother)/share/autoware_path_smoother/config/elastic_band_smoother.param.yaml \
+                trajectory_follower_node_param_path:=$(ros2 pkg prefix autoware_trajectory_follower_node)/share/autoware_trajectory_follower_node/config/simple_trajectory_follower.param.yaml \
+                lat_controller_param_path:=$(ros2 pkg prefix autoware_mpc_lateral_controller)/share/autoware_mpc_lateral_controller/param/lateral_controller_defaults.param.yaml \
+                lon_controller_param_path:=$(ros2 pkg prefix autoware_pid_longitudinal_controller)/share/autoware_pid_longitudinal_controller/config/autoware_pid_longitudinal_controller.param.yaml \
+                vehicle_cmd_gate_param_path:=$(ros2 pkg prefix autoware_vehicle_cmd_gate)/share/autoware_vehicle_cmd_gate/config/vehicle_cmd_gate.param.yaml \
+                lane_departure_checker_param_path:=$(ros2 pkg prefix autoware_lane_departure_checker)/share/autoware_lane_departure_checker/config/lane_departure_checker.param.yaml \
+                control_validator_param_path:=$(ros2 pkg prefix autoware_control_validator)/share/autoware_control_validator/config/control_validator.param.yaml \
+                operation_mode_transition_manager_param_path:=$(ros2 pkg prefix autoware_operation_mode_transition_manager)/share/autoware_operation_mode_transition_manager/config/operation_mode_transition_manager.param.yaml \
+                shift_decider_param_path:=$(ros2 pkg prefix autoware_shift_decider)/share/autoware_shift_decider/config/shift_decider.param.yaml \
+                obstacle_collision_checker_param_path:=$(ros2 pkg prefix autoware_collision_detector)/share/autoware_collision_detector/config/collision_detector.param.yaml \
+                external_cmd_selector_param_path:=$(ros2 pkg prefix autoware_external_cmd_selector)/share/autoware_external_cmd_selector/config/external_cmd_selector.param.yaml \
+                aeb_param_path:=$(ros2 pkg prefix autoware_autonomous_emergency_braking)/share/autoware_autonomous_emergency_braking/config/autonomous_emergency_braking.param.yaml \
+                predicted_path_checker_param_path:=$(ros2 pkg prefix autoware_predicted_path_checker)/share/autoware_predicted_path_checker/config/predicted_path_checker.param.yaml \
+                collision_detector_param_path:=$(ros2 pkg prefix autoware_collision_detector)/share/autoware_collision_detector/config/collision_detector.param.yaml \
+                use_intra_process:=true \
+                use_multithread:=false \
+                target_container:=control 
+          env:
+            - name: RMW_IMPLEMENTATION
+              value: rmw_fastrtps_cpp
+            - name: ROS_HOME
+              value: /autoware_data/.ros
+            - name: ROS_LOG_DIR
+              value: /autoware_data/.ros/log
+          volumeMounts:
+            - name: map-vol
+              mountPath: /autoware_map
+              readOnly: true
+            - name: data-vol
+              mountPath: /autoware_data
+      volumes:
+        - name: map-vol
+          persistentVolumeClaim:
+            claimName: map-pvc
+        - name: data-vol
+          persistentVolumeClaim:
+            claimName: data-pvc

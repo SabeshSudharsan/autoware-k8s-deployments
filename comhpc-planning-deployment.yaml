@@ -1,0 +1,124 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: autoware-planning
+  labels:
+    app: autoware-planning
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: autoware-planning
+  template:
+    metadata:
+      labels:
+        app: autoware-planning
+    spec:
+      hostNetwork: true
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 986
+      containers:
+        - name: autoware-planning
+          image: sudharsansabesh/autoware-sim:universe-devel
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              source /opt/autoware/setup.bash
+              ros2 launch tier4_planning_launch planning.launch.xml \
+                vehicle_param_file:=$(ros2 pkg prefix sample_vehicle_description)/share/sample_vehicle_description/config/vehicle_info.param.yaml \
+                mission_planner_param_path:=/opt/autoware/share/autoware_mission_planner/config/mission_planner.param.yaml \
+                freespace_planner_param_path:=$(ros2 pkg prefix autoware_freespace_planner)/share/autoware_freespace_planner/config/freespace_planner.param.yaml \
+                planning_validator_param_path:=$(ros2 pkg prefix autoware_planning_validator)/share/autoware_planning_validator/config/planning_validator.param.yaml \
+                common_param_path:=$(ros2 pkg prefix autoware_launch)/share/autoware_launch/config/planning/scenario_planning/common/common.param.yaml \
+                nearest_search_param_path:=$(ros2 pkg prefix autoware_launch)/share/autoware_launch/config/planning/scenario_planning/common/nearest_search.param.yaml \
+                velocity_smoother_type:=Analytical \
+                velocity_smoother_param_path:=$(ros2 pkg prefix autoware_launch)/share/autoware_launch/config/planning/scenario_planning/common/autoware_velocity_smoother/velocity_smoother.param.yaml \
+                velocity_smoother_type_param_path:=$(ros2 pkg prefix autoware_launch)/share/autoware_launch/config/planning/scenario_planning/common/autoware_velocity_smoother/Analytical.param.yaml \
+                behavior_velocity_smoother_type:=Analytical \
+                behavior_velocity_smoother_type_param_path:=$(ros2 pkg prefix autoware_launch)/share/autoware_launch/config/planning/scenario_planning/common/autoware_velocity_smoother/Analytical.param.yaml \
+                behavior_path_planner_param_path:=$(ros2 pkg prefix autoware_launch)/share/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/behavior_path_planner.param.yaml \
+                behavior_velocity_planner_param_path:=$(ros2 pkg prefix autoware_launch)/share/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/behavior_velocity_planner.param.yaml \
+                behavior_velocity_planner_common_param_path:=$(ros2 pkg prefix autoware_launch)/share/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/behavior_velocity_planner_common.param.yaml \
+                behavior_velocity_planner_blind_spot_module_param_path:=$(ros2 pkg prefix autoware_launch)/share/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/blind_spot.param.yaml \
+                behavior_velocity_planner_crosswalk_module_param_path:=$(ros2 pkg prefix autoware_launch)/share/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/crosswalk.param.yaml \
+                behavior_velocity_planner_walkway_module_param_path:=$(ros2 pkg prefix autoware_launch)/share/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/walkway.param.yaml \
+                behavior_velocity_planner_detection_area_module_param_path:=$(ros2 pkg prefix autoware_launch)/share/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/detection_area.param.yaml \
+                behavior_velocity_planner_intersection_module_param_path:=$(ros2 pkg prefix autoware_launch)/share/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/intersection.param.yaml \
+                behavior_velocity_planner_no_drivable_lane_module_param_path:=$(ros2 pkg prefix autoware_launch)/share/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/no_drivable_lane.param.yaml \
+                behavior_velocity_planner_no_stopping_area_module_param_path:=$(ros2 pkg prefix autoware_launch)/share/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/no_stopping_area.param.yaml \
+                behavior_velocity_planner_occlusion_spot_module_param_path:=$(ros2 pkg prefix autoware_launch)/share/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/occlusion_spot.param.yaml \
+                behavior_velocity_planner_run_out_module_param_path:=$(ros2 pkg prefix autoware_launch)/share/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/run_out.param.yaml \
+                behavior_velocity_planner_speed_bump_module_param_path:=$(ros2 pkg prefix autoware_launch)/share/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/speed_bump.param.yaml \
+                behavior_velocity_planner_stop_line_module_param_path:=$(ros2 pkg prefix autoware_launch)/share/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/stop_line.param.yaml \
+                behavior_velocity_planner_traffic_light_module_param_path:=$(ros2 pkg prefix autoware_launch)/share/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/traffic_light.param.yaml \
+                behavior_velocity_planner_virtual_traffic_light_module_param_path:=$(ros2 pkg prefix autoware_launch)/share/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/virtual_traffic_light.param.yaml \
+                behavior_path_planner_common_param_path:=$(ros2 pkg prefix autoware_launch)/share/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/behavior_path_planner.param.yaml \
+                behavior_velocity_planner_walkway_module_param_path:=$(ros2 pkg prefix autoware_launch)/share/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/walkway.param.yaml \
+                behavior_path_planner_side_shift_module_param_path:=$(ros2 pkg prefix autoware_launch)/share/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/side_shift/side_shift.param.yaml \
+                behavior_path_planner_avoidance_by_lc_module_param_path:=$(ros2 pkg prefix autoware_launch)/share/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/avoidance_by_lane_change/avoidance_by_lane_change.param.yaml \
+                behavior_path_planner_param_path:=$(ros2 pkg prefix autoware_launch)/share/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/behavior_path_planner.param.yaml \
+                behavior_path_planner_dynamic_obstacle_avoidance_module_param_path:=$(ros2 pkg prefix autoware_launch)/share/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/autoware_behavior_path_dynamic_obstacle_avoidance_module/dynamic_obstacle_avoidance.param.yaml \
+                behavior_path_planner_static_obstacle_avoidance_module_param_path:=$(ros2 pkg prefix autoware_launch)/share/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/autoware_behavior_path_static_obstacle_avoidance_module/static_obstacle_avoidance.param.yaml \
+                behavior_path_planner_drivable_area_expansion_param_path:=$(ros2 pkg prefix autoware_launch)/share/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/drivable_area_expansion.param.yaml \
+                behavior_path_planner_goal_planner_module_param_path:=$(ros2 pkg prefix autoware_launch)/share/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/goal_planner/goal_planner.param.yaml \
+                behavior_path_planner_lane_change_module_param_path:=$(ros2 pkg prefix autoware_launch)/share/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/lane_change/lane_change.param.yaml \
+                behavior_path_planner_sampling_planner_module_param_path:=$(ros2 pkg prefix autoware_launch)/share/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/sampling_planner/sampling_planner.param.yaml \
+                behavior_path_planner_scene_module_manager_param_path:=$(ros2 pkg prefix autoware_launch)/share/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/scene_module_manager.param.yaml \
+                behavior_path_planner_side_shift_module_param_path:=$(ros2 pkg prefix autoware_launch)/share/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/side_shift/side_shift.param.yaml \
+                behavior_path_planner_start_planner_module_param_path:=$(ros2 pkg prefix autoware_launch)/share/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/start_planner/start_planner.param.yaml \
+                motion_path_smoother_type:=ElasticBand \
+                motion_path_smoother_param_path:=$(ros2 pkg prefix autoware_path_smoother)/share/autoware_path_smoother/config/elastic_band_smoother.param.yaml \
+                motion_path_planner_type:=freespace_planner \
+                freespace_planner_param_path:=$(ros2 pkg prefix autoware_freespace_planner)/share/autoware_freespace_planner/config/freespace_planner.param.yaml \
+                motion_velocity_planner_type:=freespace_planner \
+                motion_velocity_planner_param_path:=$(ros2 pkg prefix autoware_freespace_planner)/share/autoware_freespace_planner/config/freespace_planner.param.yaml \
+                motion_velocity_planner_velocity_smoother_type_param_path:=$(ros2 pkg prefix autoware_launch)/share/autoware_launch/config/planning/scenario_planning/common/autoware_velocity_smoother/Analytical.param.yaml \
+                motion_velocity_planner_type:=freespace_planner \
+                motion_velocity_planner_param_path:=$(ros2 pkg prefix autoware_freespace_planner)/share/autoware_freespace_planner/config/freespace_planner.param.yaml \
+                motion_velocity_planner_velocity_smoother_type_param_path:=$(ros2 pkg prefix autoware_launch)/share/autoware_launch/config/planning/scenario_planning/common/autoware_velocity_smoother/Analytical.param.yaml \
+                motion_velocity_planner_obstacle_stop_module_param_path:=$(ros2 pkg prefix autoware_motion_velocity_dynamic_obstacle_stop_module)/share/autoware_motion_velocity_dynamic_obstacle_stop_module/config/dynamic_obstacle_stop.param.yaml \
+                motion_velocity_planner_obstacle_slow_down_module_param_path:=$(ros2 pkg prefix autoware_motion_velocity_obstacle_slow_down_module)/share/autoware_motion_velocity_obstacle_slow_down_module/config/obstacle_slow_down.param.yaml \
+                motion_velocity_planner_obstacle_cruise_module_param_path:=$(ros2 pkg prefix autoware_motion_velocity_obstacle_cruise_module)/share/autoware_motion_velocity_obstacle_cruise_module/config/obstacle_cruise.param.yaml \
+                motion_velocity_planner_dynamic_obstacle_stop_module_param_path:=$(ros2 pkg prefix autoware_motion_velocity_dynamic_obstacle_stop_module)/share/autoware_motion_velocity_dynamic_obstacle_stop_module/config/dynamic_obstacle_stop.param.yaml \
+                motion_velocity_planner_out_of_lane_module_param_path:=$(ros2 pkg prefix autoware_motion_velocity_out_of_lane_module)/share/autoware_motion_velocity_out_of_lane_module/config/out_of_lane.param.yaml \
+                motion_velocity_planner_obstacle_velocity_limiter_module_param_path:=$(ros2 pkg prefix autoware_motion_velocity_obstacle_velocity_limiter_module)/share/autoware_motion_velocity_obstacle_velocity_limiter_module/config/obstacle_velocity_limiter.param.yaml \
+                motion_velocity_planner_mvp_run_out_module_param_path:=$(ros2 pkg prefix autoware_motion_velocity_run_out_module)/share/autoware_motion_velocity_run_out_module/config/run_out.param.yaml \
+                motion_velocity_planner_obstacle_velocity_limiter_param_path:=$(ros2 pkg prefix autoware_motion_velocity_obstacle_velocity_limiter_module)/share/autoware_motion_velocity_obstacle_velocity_limiter_module/config/obstacle_velocity_limiter.param.yaml \
+                launch_mvp_run_out_module:=true \
+                motion_velocity_planner_run_out_param_path:=$(ros2 pkg prefix autoware_motion_velocity_run_out_module)/share/autoware_motion_velocity_run_out_module/config/run_out.param.yaml \
+                motion_stop_planner_type:=obstacle_stop_planner \
+                obstacle_stop_planner_param_path:=/opt/autoware/share/autoware_motion_velocity_obstacle_stop_module/config/obstacle_stop.param.yaml \
+                obstacle_slow_down_planner_param_path:=/opt/autoware/share/autoware_motion_velocity_obstacle_slow_down_module/config/obstacle_slow_down.param.yaml \
+                dynamic_obstacle_stop_planner_param_path:=/opt/autoware/share/autoware_motion_velocity_dynamic_obstacle_stop_module/config/dynamic_obstacle_stop.param.yaml \
+                obstacle_velocity_limiter_param_path:=/opt/autoware/share/autoware_motion_velocity_obstacle_velocity_limiter_module/config/obstacle_velocity_limiter.param.yaml \
+                obstacle_stop_planner_acc_param_path:=/opt/autoware/share/autoware_motion_velocity_obstacle_stop_module/config/obstacle_stop.param.yaml \
+                launch_surround_obstacle_checker:=true \
+                surround_obstacle_checker_param_path:=/opt/autoware/share/autoware_launch/config/planning/scenario_planning/lane_driving/motion_planning/surround_obstacle_checker/surround_obstacle_checker.param.yaml \
+                costmap_generator_param_path:=/opt/autoware/share/autoware_costmap_generator/config/costmap_generator.param.yaml \
+                enable_all_modules_auto_mode:=true \
+                launch_parking_module:=true \
+                enable_parking:=false \
+                is_simulation:=true
+
+          env:
+            - name: RMW_IMPLEMENTATION
+              value: rmw_fastrtps_cpp
+            - name: ROS_HOME
+              value: /autoware_data/.ros
+            - name: ROS_LOG_DIR
+              value: /autoware_data/.ros/log
+          volumeMounts:
+            - name: map-vol
+              mountPath: /autoware_map
+              readOnly: true
+            - name: data-vol
+              mountPath: /autoware_data
+      volumes:
+        - name: map-vol
+          persistentVolumeClaim:
+            claimName: map-pvc
+        - name: data-vol
+          persistentVolumeClaim:
+            claimName: data-pvc

@@ -1,0 +1,93 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: autoware-simulator
+  labels:
+    app: autoware-simulator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: autoware-simulator
+  template:
+    metadata:
+      labels:
+        app: autoware-simulator
+    spec:
+      hostNetwork: true
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 986
+      containers:
+        - name: autoware-simulator
+          image: sudharsansabesh/autoware-sim:universe-devel
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: vnc
+              containerPort: 5900
+              hostPort: 5900
+              protocol: TCP
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              source /opt/autoware/setup.bash
+              ros2 launch tier4_simulator_launch simulator.launch.xml \
+                launch_dummy_perception:=false \
+                launch_dummy_vehicle:=false \
+                vehicle_info_param_file:=$(ros2 pkg prefix sample_vehicle_description)/share/sample_vehicle_description/config/vehicle_info.param.yaml \
+                fault_injection_param_path:=/opt/autoware/share/autoware_fault_injection/config/fault_injection.param.yaml \
+                obstacle_segmentation_ground_segmentation_elevation_map_param_path:=/opt/autoware/share/autoware_obstacle_segmentation_ground_segmentation_elevation_map/config/ground_segmentation.param.yaml \
+                laserscan_based_occupancy_grid_map_param_path:=/opt/autoware/share/autoware_laserscan_based_occupancy_grid_map/config/laserscan_based_occupancy_grid_map.param.yaml \
+                occupancy_grid_map_updater:=true \
+                occupancy_grid_map_updater_param_path:=/opt/autoware/share/autoware_occupancy_grid_map_updater/config/occupancy_grid_map_updater.param.yaml \
+                localization_error_monitor_param_path:=/opt/autoware/share/tier4_localization_launch/config/localization_error_monitor.param.yaml \
+                ekf_localizer_param_path:=/opt/autoware/share/tier4_localization_launch/config/ekf_localizer.param.yaml \
+                stop_filter_param_path:=/opt/autoware/share/tier4_localization_launch/config/stop_filter.param.yaml \
+                pose_initializer_param_path:=/opt/autoware/share/autoware_launch/config/localization/pose_initializer.param.yaml \
+                twist2accel_param_path:=/opt/autoware/share/autoware_twist2accel/config/twist2accel.param.yaml \
+                each_traffic_light_map_based_detector_param_path:=/opt/autoware/share/autoware_each_traffic_light_map_based_detector/config/each_traffic_light_map_based_detector.param.yaml \
+                traffic_light_fine_detector_param_path:=/opt/autoware/share/autoware_traffic_light_fine_detector/config/traffic_light_fine_detector.param.yaml \
+                yolox_traffic_light_detector_param_path:=/opt/autoware/share/autoware_launch/config/perception/traffic_light_recognition/tensorrt_yolox/yolox_traffic_light_detector.param.yaml \
+                car_traffic_light_classifier_param_path:=/opt/autoware/share/autoware_launch/config/perception/traffic_light_recognition/traffic_light_classifier/car_traffic_light_classifier.param.yaml \
+                pedestrian_traffic_light_classifier_param_path:=/opt/autoware/share/autoware_launch/config/perception/traffic_light_recognition/traffic_light_classifier/pedestrian_traffic_light_classifier.param.yaml \
+                traffic_light_roi_visualizer_param_path:=/opt/autoware/share/autoware_launch/config/perception/traffic_light_recognition/traffic_light_roi_visualizer/traffic_light_roi_visualizer.param.yaml \
+                traffic_light_occlusion_predictor_param_path:=/opt/autoware/share/autoware_launch/config/perception/traffic_light_recognition/traffic_light_occlusion_predictor/traffic_light_occlusion_predictor.param.yaml \
+                traffic_light_multi_camera_fusion_param_path:=/opt/autoware/share/autoware_launch/config/perception/traffic_light_recognition/traffic_light_multi_camera_fusion/traffic_light_multi_camera_fusion.param.yaml \
+                traffic_light_category_merger_param_path:=/opt/autoware/share/autoware_launch/config/perception/traffic_light_recognition/traffic_light_category_merger/traffic_light_category_merger.param.yaml \
+                traffic_light_selector_param_path:=/opt/autoware/share/autoware_launch/config/perception/traffic_light_recognition/traffic_light_selector/traffic_light_selector.param.yaml \
+                traffic_light_visualization_param_path:=/opt/autoware/share/autoware_traffic_light_visualization/config/traffic_light_roi_visualizer.param.yaml \
+                traffic_light_arbiter_param_path:=/opt/autoware/share/autoware_traffic_light_arbiter/config/traffic_light_arbiter.param.yaml \
+                crosswalk_traffic_light_estimator_param_path:=/opt/autoware/share/autoware_crosswalk_traffic_light_estimator/config/crosswalk_traffic_light_estimator.param.yaml \
+                localization_sim_mode:=true \
+                launch_dummy_doors:=false \
+                launch_scenario_simulator_v2_adapter:=true \
+                raw_vehicle_cmd_converter_param_path:=/opt/autoware/share/autoware_raw_vehicle_cmd_converter/config/raw_vehicle_cmd_converter.param.yaml \
+                vehicle_model:=sample_vehicle \
+                scenario_simulation:=true
+          env:
+            - name: RMW_IMPLEMENTATION
+              value: rmw_fastrtps_cpp
+            - name: QT_QPA_PLATFORM
+              value: "vnc"
+            - name: ROS_HOME
+              value: /autoware_data/.ros
+            - name: ROS_LOG_DIR
+              value: /autoware_data/.ros/log
+          volumeMounts:
+            - name: map-vol
+              mountPath: /autoware_map
+              readOnly: true
+            - name: data-vol
+              mountPath: /autoware_data
+            - name: x11-sock
+              mountPath: /tmp/.X11-unix
+      volumes:
+        - name: map-vol
+          persistentVolumeClaim:
+            claimName: map-pvc
+        - name: data-vol
+          persistentVolumeClaim:
+            claimName: data-pvc
+        - name: x11-sock
+          hostPath:
+            path: /tmp/.X11-unix
